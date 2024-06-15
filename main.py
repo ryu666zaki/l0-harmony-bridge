@@ -151,7 +151,7 @@ async def swap_usdt(chain_from, chain_to, wallet):
         nonce = await chain_from.w3.eth.get_transaction_count(address)
         approve_txn = await usdt_contract.functions.approve(proxy_address, max_amount).build_transaction({
             'from': address,
-            'gasPrice': int(gas_price / 3),
+            'gasPrice': int(gas_price / 2),
             'nonce': nonce,
         })
         
@@ -170,12 +170,12 @@ async def swap_usdt(chain_from, chain_to, wallet):
     else:
         pass
 
-    amount = [10000000000000000, 20000000000000000]
+    amount = [100000000000000, 320000000000000000]
 
     _from = address
     _chainId = chain_to.id
     _toaddress = address
-    _tokenId = int(random.sample(amount, 1)[0])
+    _tokenId = int(random.randint(amount))
     _zropayment = '0x0000000000000000000000000000000000000000'
     _refund_address = address
 
@@ -193,7 +193,7 @@ async def swap_usdt(chain_from, chain_to, wallet):
     ).build_transaction({
         'from': address,
         'value': fee,
-        'gasPrice': int(gas_price / 3),
+        'gasPrice': int(gas_price / 2),
         'nonce': nonce,
     })
     gas_estimate = await chain_from.w3.eth.estimate_gas(swap_txn)
@@ -250,7 +250,7 @@ async def swap_usdc(chain_from, chain_to, wallet):
         nonce = await chain_from.w3.eth.get_transaction_count(address)    
         approve_txn = await usdc_contract.functions.approve(proxy_address, max_amount).build_transaction({
             'from': address,
-            'gasPrice': int(gas_price / 3),
+            'gasPrice': int(gas_price / 2),
             'nonce': nonce,
         })
 
@@ -266,12 +266,12 @@ async def swap_usdc(chain_from, chain_to, wallet):
             print(e)
             print(address)
 
-    amount = [10000000000000000, 20000000000000000]
+    amount = [1000000000000, 43000000000000000]
 
     _from = address
     _chainId = chain_to.id
     _toaddress = address
-    _tokenId = int(random.sample(amount, 1)[0])
+    _tokenId = int(random.randint(amount))
     _zropayment = '0x0000000000000000000000000000000000000000'
     _refund_address = address
 
@@ -289,7 +289,7 @@ async def swap_usdc(chain_from, chain_to, wallet):
     ).build_transaction({
         'from': address,
         'value': fee,
-        'gasPrice': int(gas_price / 3),
+        'gasPrice': int(gas_price / 2),
         'nonce': nonce,
     })
     gas_estimate = await chain_from.w3.eth.estimate_gas(swap_txn)
@@ -314,7 +314,7 @@ async def get_amount_out(chain, amountIn, tokenIn, tokenOut):
 
         amountsOut = contract_txn[1]
 
-        return int(amountsOut * 0.99)
+        return int(amountsOut)
     
     except Exception as e:
         print(e)
@@ -324,11 +324,7 @@ async def sushiswap_native(wallet, chain, token):
 
     account = chain.w3.eth.account.from_key(wallet)
     address = account.address
-    #balance = await chain.w3.eth.get_balance(address)
-    #keep_value = balance / 2
-    #amount_for_usdt = (balance - keep_value) / 2
-
-    amount = random.randint(1000000000000000,1300000000000000)
+    amount = random.randint(50000000, 2500000000000000)
 
     tokenIn = chain.native_token_address
     amountIn = int(amount)
@@ -342,13 +338,13 @@ async def sushiswap_native(wallet, chain, token):
         amountOut,
         [tokenIn, tokenOut],
         address,
-        (int(time.time()) + 10000)
+        (int(time.time()) + 100000)
     ).build_transaction(
         {
             "from": address,
             "value": amountIn,
             "nonce": nonce,
-            'gasPrice': int(gas_price / 3),
+            'gasPrice': int(gas_price / 2),
         }
     )
 
@@ -375,11 +371,6 @@ async def check_allowance(chain, wallet, balance, contract):
 
     nonce = await chain.w3.eth.get_transaction_count(address)
     gas_price = await chain.w3.eth.gas_price
-    if chain.__class__.__name__ == 'Arbitrum':
-        gas = 1000000
-    else:
-        gas = 500000
-
     if allowance < balance:
         max_amount = chain.w3.to_wei(2 ** 64 - 1, 'ether')
         approve_txn = await contract.functions.approve(chain.sushiswap_address,
@@ -409,8 +400,6 @@ async def sushiswap_token(wallet, chain, token):
         amountOut = await get_amount_out(chain, amountIn, tokenIn, tokenOut)
 
         allowance = await check_allowance(chain, wallet, balance, chain.usdt_contract) if token == 'USDT' else await check_allowance(chain, wallet, balance, chain.usdc_contract)
-        await asyncio.sleep(20)
-
         nonce = await chain.w3.eth.get_transaction_count(address)
         gas_price = await chain.w3.eth.gas_price
 
@@ -419,13 +408,13 @@ async def sushiswap_token(wallet, chain, token):
             amountOut,
             [tokenIn, tokenOut],
             address,
-            (int(time.time()) + 10000)
+            (int(time.time()) + 100000)
         ).build_transaction(
             {
                 "from": address,
                 "value": 0,
                 "nonce": nonce,
-                'gasPrice': gas_price,
+                'gasPrice': gas_price * 1.25,
             }
         )
 
@@ -460,54 +449,21 @@ async def work(wallet):
     except Exception as e:
         print(e)
         print(address)
-    # await sushiswap_native(wallet, arb, 'USDT')
-    # await asyncio.sleep(30)
-    # await sushiswap_native(wallet, arb, 'USDC')
-    # await asyncio.sleep(30)
 
     chains = [
          (bsc, hmy, bsc.usdc_contract, swap_usdc, "USDC", "BSC", "Harmony"),
          (bsc, hmy, bsc.usdt_contract, swap_usdt, "USDT", "BSC", "Harmony"),
          (bsc, hmy, bsc.usdc_contract, swap_usdc, "USDC", "BSC", "Harmony"),
          (bsc, hmy, bsc.usdt_contract, swap_usdt, "USDT", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdc_contract, swap_usdc, "USDC", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdt_contract, swap_usdt, "USDT", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdc_contract, swap_usdc, "USDC", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdt_contract, swap_usdt, "USDT", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdc_contract, swap_usdc, "USDC", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdt_contract, swap_usdt, "USDT", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdc_contract, swap_usdc, "USDC", "BSC", "Harmony"),
-         # (bsc, hmy, bsc.usdt_contract, swap_usdt, "USDT", "BSC", "Harmony"),
-        # (arb, hmy, arb.usdt_contract, swap_usdt, "USDT", "Arbitrum", "Harmony"),
-        # (arb, hmy, arb.usdc_contract, swap_usdc, "USDC", "Arbitrum", "Harmony"),
-        # (hmy, bsc, hmy.bscUSDC_contract, swap_usdc, "USDС", "Harmony", "BSC"),
-        # (hmy, bsc, hmy.bscUSDT_contract, swap_usdt, "USDT", "Harmony", "BSC"),
-        # (hmy, arb, hmy.arbUSDC_contract, swap_usdc, "USDС", "Harmony", "Arbitrum"),
-        # (hmy, arb, hmy.arbUSDT_contract, swap_usdt, "USDT", "Harmony", "Arbitrum")
     ]
 
     for (from_chain, to_chain, contract, swap_fn, token, from_name, to_name) in chains:
 
-        #balance = await check_balance(address, contract)
-
-        # while balance < 100000:
-        #     await asyncio.sleep(60)
-        #     balance = await check_balance(address, contract)
-        #
         txn_hash = await swap_fn(from_chain, to_chain, wallet)
         print(f"{from_name} -> {to_name} | {token} | {address} | Transaction: {from_chain.blockExplorerUrl}/tx/{txn_hash.hex()}")
         
         await asyncio.sleep(300)
 
-    # await asyncio.sleep(30)
-    # await sushiswap_token(wallet, bsc, 'USDT')
-    # await asyncio.sleep(15)
-    # await sushiswap_token(wallet, bsc, 'USDC')
-    # await asyncio.sleep(15)
-    # await sushiswap_token(wallet, arb, 'USDT')
-    # await asyncio.sleep(15)
-    # await sushiswap_token(wallet, arb, 'USDC')
-    # await asyncio.sleep(15)
     
     print(f'Wallet: {address} | DONE')
 
